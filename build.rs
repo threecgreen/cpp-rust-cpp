@@ -1,9 +1,10 @@
 extern crate bindgen;
+extern crate cbindgen;
 
 use std::env;
 use std::path::PathBuf;
 
-fn main() {
+fn generate_rust_bindings() {
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=wrapper.h");
 
@@ -32,4 +33,23 @@ fn main() {
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+}
+
+fn generate_cpp_bindings() {
+    let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+
+    let config = cbindgen::Config::from_file("cbindgen.toml")
+        .expect("No cbindgen.toml found");
+
+    cbindgen::Builder::new()
+      .with_crate(crate_dir)
+      .with_config(config)
+      .generate()
+      .expect("Unable to generate bindings")
+      .write_to_file("cpp/bindings.h");
+}
+
+fn main() {
+    generate_rust_bindings();
+    generate_cpp_bindings();
 }

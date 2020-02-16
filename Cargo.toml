@@ -8,7 +8,7 @@ edition = "2018"
 crate_type = ["staticlib"]
 
 [dependencies]
-cbindgen = "0.13.1"
 
 [build-dependencies]
 bindgen = "0.53.1"
+cbindgen = "0.13.1"

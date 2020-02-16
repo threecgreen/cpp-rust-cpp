@@ -1,3 +1,3 @@
-mod algo;
+pub mod algo;
 mod cpp;
-mod demo_impl;
+pub mod demo_impl;
