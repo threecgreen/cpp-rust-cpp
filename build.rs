@@ -17,6 +17,10 @@ fn generate_rust_bindings() {
         .header("wrapper.h")
         // Don't derive Copy and Clone
         .no_copy("Algorithm")
+        .rustified_non_exhaustive_enum("*")
+        // Whitelist
+        .whitelist_type("Logger")
+        .whitelist_type("Level")
         // Set clang arguments. Need to force C++ here because header files
         // end in .h instead of .hpp
         .clang_args(vec!["-x", "c++", "-std=c++17"])

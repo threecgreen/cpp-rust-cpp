@@ -1,6 +1,7 @@
 [package]
 name = "impl-lib"
 version = "0.1.0"
+readme = "../README.md"
 authors = ["Carter Green <cartergr@usc.edu>"]
 edition = "2018"
 

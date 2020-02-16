@@ -1,3 +1,3 @@
-add_executable(salty-rust main.cpp)
+add_executable(cpp-rust-cpp bindings.h logger.cpp logger.h main.cpp)
 
-target_link_libraries(salty-rust impl-lib pthread dl)
+target_link_libraries(cpp-rust-cpp impl-lib pthread dl)
