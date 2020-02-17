@@ -15,8 +15,6 @@ fn generate_rust_bindings() {
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h")
-        // Don't derive Copy and Clone
-        .no_copy("Algorithm")
         .rustified_non_exhaustive_enum("*")
         // Whitelist
         .whitelist_type("Logger")

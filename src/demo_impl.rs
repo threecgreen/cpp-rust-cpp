@@ -1,7 +1,6 @@
+use crate::algo::Algorithm;
 use crate::cpp::{Level, Logger};
 use crate::logger_wrapper::LoggerWrapper;
-
-use std::mem::transmute;
 
 pub struct Demo {
     is_running: bool,
@@ -9,31 +8,74 @@ pub struct Demo {
     logger: LoggerWrapper,
 }
 
+// TODO: These shim functions should be generated with a macro
+// Need to be free functions to be compatible with C ABI
+#[no_mangle]
+pub extern "C" fn create(logger_ptr: &mut Logger) -> *mut Demo {
+    Demo::create(logger_ptr)
+}
 
-// This should be `impl Algorithm`, but cbindgen doesn't seem to detect that
-// these are public unless we explicitly mark them `pub`
-//
-// impl Algorithm for Demo {
-impl Demo {
-    #[no_mangle]
-    pub extern "C" fn create(logger_ptr: *mut Logger) -> *mut Self {
+#[no_mangle]
+pub extern "C" fn destroy(demo_ptr: *mut Demo) {
+    Demo::destroy(demo_ptr);
+}
+
+#[no_mangle]
+pub extern "C" fn on_register(demo: &mut Demo) {
+    demo.on_register();
+}
+
+#[no_mangle]
+pub extern "C" fn on_system_start(demo: &mut Demo) {
+    demo.on_system_start();
+}
+
+#[no_mangle]
+pub extern "C" fn main_thread_event(demo: &mut Demo) {
+    demo.main_thread_event();
+}
+
+#[no_mangle]
+pub extern "C" fn background_thread_event(demo: &mut Demo) {
+    demo.background_thread_event();
+}
+
+#[no_mangle]
+pub extern "C" fn on_system_stop(demo: &mut Demo) {
+    demo.on_system_stop();
+}
+
+#[no_mangle]
+pub extern "C" fn on_unregister(demo: &mut Demo) {
+    demo.on_unregister();
+}
+
+impl Algorithm for Demo {
+    fn create(logger_ptr: *mut Logger) -> *mut Self {
         let demo = Self {
             is_running: false,
             logger: LoggerWrapper::new(logger_ptr),
             name: "Demo".to_owned(),
         };
-        unsafe {
-            transmute(Box::new(demo))
-        }
+        Box::into_raw(Box::new(demo))
     }
 
-    #[no_mangle]
-    pub extern "C" fn on_register(&mut self) {
+    // Because `Demo` is an opaque type to C++, it can't free it
+    fn destroy(algo_ptr: *mut Self) {
+        if algo_ptr.is_null() {
+            return;
+        }
+        unsafe {
+            Box::from_raw(algo_ptr)
+        };
+        // Dropped
+    }
+
+    fn on_register(&mut self) {
         self.logger.persist(Level::Info, &format!("Registering {}...", self.name));
     }
 
-    #[no_mangle]
-    pub extern "C" fn on_system_start(&mut self) {
+    fn on_system_start(&mut self) {
         if self.is_running {
             let msg = "Tried to start, but already running.";
             self.logger.persist(Level::Error, msg);
@@ -43,33 +85,20 @@ impl Demo {
         self.is_running = true;
     }
 
-    #[no_mangle]
-    pub extern "C" fn main_thread_event(&mut self) {
+    fn main_thread_event(&mut self) {
         self.logger.persist(Level::Info, &format!("Processing main event"));
     }
 
-    #[no_mangle]
-    pub extern "C" fn background_thread_event(&mut self) {
+    fn background_thread_event(&mut self) {
         self.logger.persist(Level::Info, &format!("Processing background event"));
     }
 
-    #[no_mangle]
-    pub extern "C" fn on_system_stop(&mut self) {
+    fn on_system_stop(&mut self) {
         self.logger.persist(Level::Info, &format!("Stopping {}...", self.name));
         self.is_running = false;
     }
 
-    #[no_mangle]
-    pub extern "C" fn on_unregister(&mut self) {
+    fn on_unregister(&mut self) {
         self.logger.persist(Level::Info, &format!("Unregistering {}...", self.name));
-    }
-
-    // right now c++ doesn't know the size of demo so it can be freed
-    #[no_mangle]
-    pub extern "C" fn destroy(&mut self) {
-        let _counter: Box<Self> = unsafe{
-            transmute(self)
-        };
-        // Dropped
     }
 }

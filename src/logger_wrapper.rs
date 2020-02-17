@@ -2,18 +2,17 @@ use crate::cpp::{Level, Logger};
 
 use std::ffi;
 
-// TODO: does it make sense for `Logger` to be managed?
-pub struct LoggerWrapper(Box<Logger>);
+// Not a box because this wrapper does not own `Logger`. That is owned by C++
+// caller
+pub struct LoggerWrapper(*mut Logger);
 
 impl LoggerWrapper {
     pub fn new(logger_ptr: *mut Logger) -> Self {
         if logger_ptr.is_null() {
+            // TODO: panicking in FFI results in undefined behavior
             panic!("Demo was passed a null logger pointer");
         }
-        let logger = unsafe {
-            Box::from_raw(logger_ptr)
-        };
-        Self (logger)
+        Self (logger_ptr)
     }
 
     /// Persistence will panic if `msg` cannot be converted to a
@@ -23,7 +22,7 @@ impl LoggerWrapper {
             .expect("Failed to create CString");
         let c_msg_ptr = c_msg.as_ptr();
         unsafe {
-            self.0.Persist(level, c_msg_ptr);
+            (*self.0).Persist(level, c_msg_ptr);
         }
     }
 }

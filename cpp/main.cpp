@@ -7,7 +7,7 @@
 void EventLoop()
 {
   Logger logger;
-  ffi::Demo* demoAlgo(ffi::create(&logger));
+  ffi::Demo* demoAlgo = ffi::create(&logger);
   ffi::on_register(demoAlgo);
   ffi::on_system_start(demoAlgo);
   for (size_t i = 0; i < 10; ++i)
