@@ -1,12 +1,14 @@
 use crate::cpp::{Level, Logger};
 use crate::logger_wrapper::LoggerWrapper;
 
-#[repr(C)]
+use std::mem::transmute;
+
 pub struct Demo {
     is_running: bool,
     name: String,
     logger: LoggerWrapper,
 }
+
 
 // This should be `impl Algorithm`, but cbindgen doesn't seem to detect that
 // these are public unless we explicitly mark them `pub`
@@ -14,11 +16,14 @@ pub struct Demo {
 // impl Algorithm for Demo {
 impl Demo {
     #[no_mangle]
-    pub extern "C" fn create(logger_ptr: *mut Logger) -> Self {
-        Self {
+    pub extern "C" fn create(logger_ptr: *mut Logger) -> *mut Self {
+        let demo = Self {
             is_running: false,
             logger: LoggerWrapper::new(logger_ptr),
             name: "Demo".to_owned(),
+        };
+        unsafe {
+            transmute(Box::new(demo))
         }
     }
 
@@ -57,5 +62,14 @@ impl Demo {
     #[no_mangle]
     pub extern "C" fn on_unregister(&mut self) {
         self.logger.persist(Level::Info, &format!("Unregistering {}...", self.name));
+    }
+
+    // right now c++ doesn't know the size of demo so it can be freed
+    #[no_mangle]
+    pub extern "C" fn destroy(&mut self) {
+        let _counter: Box<Self> = unsafe{
+            transmute(self)
+        };
+        // Dropped
     }
 }

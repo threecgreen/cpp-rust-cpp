@@ -1,1 +1,1 @@
-cargo_build(NAME test-lib)
+cargo_build(NAME impl-lib)
