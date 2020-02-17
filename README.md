@@ -10,6 +10,9 @@ $ cargo build
 
 To build everything:
 ```sh
+$ cargo install --force cbindgen
+$ cbindgen -c cbindgen.toml -o cpp/bindings.h
 $ mkdir build && cd build
 $ cmake ..
 $ make
+```
